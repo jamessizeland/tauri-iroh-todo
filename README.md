@@ -1,5 +1,9 @@
 # iroh-tauri-todomvc
 
+## NOTE
+
+This is a copy of <https://github.com/n0-computer/iroh-examples/tree/main/tauri-todos> with mobile build enabled, with CI, to help in debugging mobile issues.
+
 This TODO app was created as an example for how to use Iroh to add sync and
 networking capabilities to your app.
 
