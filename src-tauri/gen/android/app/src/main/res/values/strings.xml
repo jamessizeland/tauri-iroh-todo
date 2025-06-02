@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">tauri-todomvc</string>
+    <string name="main_activity_title">tauri-todomvc</string>
+</resources>

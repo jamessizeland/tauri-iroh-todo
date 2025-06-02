@@ -1,0 +1,32 @@
+{
+  "name": "tauri-todomvc",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "jotai": "^2.2.3",
+    "react-use": "^17.4.0",
+    "reactjs-popup": "^2.0.5",
+    "todomvc-app-css": "^2.4.2",
+    "use-debounce": "^10.0.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "*",
+    "vite": "^6.0.3",
+    "@tauri-apps/cli": "^2"
+  }
+}
