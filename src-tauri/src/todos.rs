@@ -60,7 +60,7 @@ const MAX_LABEL_LEN: usize = 2 * 1000;
 /// List of todos, including completed todos that have not been archived
 pub struct Todos {
     iroh: Iroh,
-    doc: Doc<FlumeConnector<iroh_docs::rpc::proto::Response, iroh_docs::rpc::proto::Request>>,
+    pub doc: Doc<FlumeConnector<iroh_docs::rpc::proto::Response, iroh_docs::rpc::proto::Request>>,
 
     ticket: DocTicket,
     author: AuthorId,

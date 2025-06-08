@@ -1,4 +1,5 @@
 use anyhow::Result;
+use tracing::instrument;
 
 use crate::{
     state::AppState,
@@ -6,6 +7,7 @@ use crate::{
 };
 
 #[tauri::command]
+#[instrument(skip(state))]
 pub async fn get_todos(state: tauri::State<'_, AppState>) -> Result<Vec<Todo>, String> {
     if let Some((todos, _)) = &mut *state.todos.lock().await {
         let todos = todos.get_todos().await.map_err(|e| e.to_string())?;
@@ -15,6 +17,7 @@ pub async fn get_todos(state: tauri::State<'_, AppState>) -> Result<Vec<Todo>, S
 }
 
 #[tauri::command]
+#[instrument(skip(app_handle, state))]
 pub async fn new_list(
     app_handle: tauri::AppHandle,
     state: tauri::State<'_, AppState>,
@@ -32,6 +35,7 @@ pub async fn new_list(
 }
 
 #[tauri::command]
+#[instrument(skip(state), fields(todo.id = %todo.id, todo.label = %todo.label.chars().take(30).collect::<String>()))]
 pub async fn new_todo(todo: Todo, state: tauri::State<'_, AppState>) -> Result<(), String> {
     if let Some((todos, _)) = &mut *state.todos.lock().await {
         todos
@@ -44,6 +48,7 @@ pub async fn new_todo(todo: Todo, state: tauri::State<'_, AppState>) -> Result<(
 }
 
 #[tauri::command]
+#[instrument(skip(state), fields(todo.id = %todo.id, todo.label = %todo.label.chars().take(30).collect::<String>()))] 
 pub async fn update_todo(todo: Todo, state: tauri::State<'_, AppState>) -> Result<(), String> {
     if let Some((todos, _)) = &mut *state.todos.lock().await {
         todos
@@ -56,6 +61,7 @@ pub async fn update_todo(todo: Todo, state: tauri::State<'_, AppState>) -> Resul
 }
 
 #[tauri::command]
+#[instrument(skip(state), fields(id = %id))]
 pub async fn toggle_done(id: String, state: tauri::State<'_, AppState>) -> Result<bool, String> {
     if let Some((todos, _)) = &mut *state.todos.lock().await {
         todos.toggle_done(id).await.map_err(|e| e.to_string())?;
@@ -65,6 +71,7 @@ pub async fn toggle_done(id: String, state: tauri::State<'_, AppState>) -> Resul
 }
 
 #[tauri::command]
+#[instrument(skip(state), fields(id = %id))]
 pub async fn delete(id: String, state: tauri::State<'_, AppState>) -> Result<bool, String> {
     if let Some((todos, _)) = &mut *state.todos.lock().await {
         todos.delete(id).await.map_err(|e| e.to_string())?;
@@ -74,6 +81,7 @@ pub async fn delete(id: String, state: tauri::State<'_, AppState>) -> Result<boo
 }
 
 #[tauri::command]
+#[instrument(skip(app_handle, state), fields(ticket = %ticket))]
 pub async fn set_ticket(
     app_handle: tauri::AppHandle,
     ticket: String,
@@ -92,6 +100,7 @@ pub async fn set_ticket(
 }
 
 #[tauri::command]
+#[instrument(skip(state))]
 pub async fn get_ticket(state: tauri::State<'_, AppState>) -> Result<String, String> {
     if let Some((todos, _)) = &mut *state.todos.lock().await {
         return Ok(todos.ticket());

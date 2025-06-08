@@ -28,32 +28,50 @@ impl AppState {
         todos: Todos,
     ) -> Result<()> {
         let mut events = todos.doc_subscribe().await?;
+        let id = todos.doc.id();
         let events_handle = tokio::spawn(async move {
-            while let Some(Ok(event)) = events.next().await {
-                match event {
-                    LiveEvent::InsertRemote { content_status, .. } => {
-                        println!("Insert Remote: {content_status:?}");
-                        // Only update if the we already have the content. Likely to happen when a remote user toggles "done".
-                        if content_status == ContentStatus::Complete {
-                            app_handle.emit("update-all", ()).ok();
+            tracing::info!("Starting live event processing loop for doc: {}", id);
+            loop {
+                match events.next().await {
+                    Some(Ok(event)) => {
+                        tracing::debug!("Received live event: {:?}", event);
+                        match event {
+                            LiveEvent::InsertRemote { entry, content_status, .. } => {
+                                tracing::info!(author = %entry.author(), key = ?String::from_utf8_lossy(entry.key()), status = ?content_status, "Event: InsertRemote");
+                                if content_status == ContentStatus::Complete {
+                                    tracing::debug!("InsertRemote: Content is complete, emitting update-all.");
+                                    app_handle.emit("update-all", ()).ok();
+                                }
+                            }
+                            LiveEvent::InsertLocal { entry } => {
+                                tracing::info!(author = %entry.author(), key = ?String::from_utf8_lossy(entry.key()), "Event: InsertLocal");
+                                app_handle.emit("update-all", ()).ok();
+                            }
+                            LiveEvent::ContentReady { hash } => {
+                                tracing::info!(hash = %hash, "Event: ContentReady");
+                                app_handle.emit("update-all", ()).ok();
+                            }
+                            LiveEvent::NeighborUp(id) => {
+                                tracing::info!(peer = %id, "Event: NeighborUp");
+                            }
+                            LiveEvent::NeighborDown(id) => {
+                                tracing::info!(peer = %id, "Event: NeighborDown");
+                            }
+                            LiveEvent::SyncFinished(sync_event) => {
+                                tracing::info!(peer = %sync_event.peer, origin = ?sync_event.origin, result = ?sync_event.result, "Event: SyncFinished");
+                            }
+                            other => {
+                                tracing::debug!("Unhandled live event: {:?}", other);
+                            }
                         }
                     }
-                    LiveEvent::InsertLocal { .. } => {
-                        println!("Insert Local");
-                        app_handle.emit("update-all", ()).ok();
+                    Some(Err(e)) => {
+                        tracing::error!("Error in live event stream: {:?}", e);
+                        break; // Exit loop on error
                     }
-                    LiveEvent::ContentReady { .. } => {
-                        println!("Remote Content Ready");
-                        app_handle.emit("update-all", ()).ok();
-                    }
-                    LiveEvent::NeighborUp(id) => {
-                        println!("Neighbor Up: {id}");
-                    }
-                    LiveEvent::NeighborDown(id) => {
-                        println!("Neighbor Down: {id}")
-                    }
-                    other => {
-                        println!("Other: {other:?}");
+                    None => {
+                        tracing::info!("Live event stream ended.");
+                        break; // Exit loop as stream is finished
                     }
                 }
             }

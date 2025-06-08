@@ -4,13 +4,10 @@ mod state;
 mod todos;
 
 use anyhow::{anyhow, Result};
-use state::AppState;
-use tauri::Manager as _;
-// Add for tracing
-#[cfg(debug_assertions)] // Only enable detailed tracing in debug builds
+use self::{iroh::Iroh, state::AppState};
+use tauri::Manager;
+#[cfg(debug_assertions)]
 use tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};
-
-use self::iroh::Iroh;
 
 // setup an iroh node
 async fn setup<R: tauri::Runtime>(handle: tauri::AppHandle<R>) -> Result<()> {
@@ -30,16 +27,21 @@ async fn setup<R: tauri::Runtime>(handle: tauri::AppHandle<R>) -> Result<()> {
 // Call this early, e.g., at the beginning of run() or setup()
 #[cfg(debug_assertions)]
 fn setup_logging() {
-    // Example: RUST_LOG="info,iroh=trace,tauri_todomvc_lib=debug"
     // For Android, you might not be able to set ENV vars easily,
     // so a default can be provided.
-    let default_filter = "info,iroh=trace,iroh_docs=trace,iroh_net=trace,iroh_sync=trace,tauri_todomvc_lib=debug";
+    // Refined filter: INFO by default, DEBUG for app code and key iroh networking/sync.
+    let default_filter = "info,tauri_todomvc_lib=debug,iroh_sync=debug,iroh_magicsock=debug,iroh_quinn_udp=debug,iroh=warn";
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(default_filter)))
-        .with_span_events(FmtSpan::FULL)
-        // On Android, logs to stderr will appear in logcat
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(default_filter)),
+        )
+        .with_span_events(FmtSpan::CLOSE) // Less verbose span logging
+        // On Android, logs to stderr will appear in logcat.
         // On desktop, they go to the console.
         .with_writer(std::io::stderr)
+        .pretty()
+        // ANSI codes might not render well in Logcat, so disable them.
+        .with_ansi(false)
         .init();
 }
 
